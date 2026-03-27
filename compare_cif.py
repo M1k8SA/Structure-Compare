@@ -178,6 +178,22 @@ def relative_delta(v1: float, v2: float) -> float:
     return (v2 - v1) / v1 * 100.0
 
 
+def to_json_compatible(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {str(k): to_json_compatible(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [to_json_compatible(v) for v in obj]
+    if isinstance(obj, np.ndarray):
+        return [to_json_compatible(v) for v in obj.tolist()]
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.floating):
+        return float(obj)
+    return obj
+
+
 def compare_structures(
     s1: Structure,
     s2: Structure,
@@ -313,7 +329,8 @@ def main() -> None:
     print_human_readable(result, args.cif1, args.cif2)
 
     if args.json_out:
-        args.json_out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        json_result = to_json_compatible(result)
+        args.json_out.write_text(json.dumps(json_result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"\nJSON 结果已写入: {args.json_out}")
 
 
